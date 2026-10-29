@@ -20,7 +20,7 @@
             android:hardwareAccelerated="true"
             android:stateNotNeeded="true"
             android:screenOrientation="landscape"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|densityDpi|uiMode">
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|density|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
