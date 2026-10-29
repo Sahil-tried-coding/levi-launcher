@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <title>Levi Ackerman · TV Home</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Fixed 1920x1080 TV canvas, scaled to fit any 16:9 screen (HD 1366x768, Full HD, 4K). */
 @property --a{syntax:'<angle>';initial-value:0deg;inherits:false}
 :root{--red:#d9272e;--text:#f1f2f0;--mute:#aeb4b5;--serif:'Cinzel','Trajan Pro',Georgia,serif;--sans:'Inter','Segoe UI',Roboto,Arial,sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden;background:#030405;color:var(--text);font-family:var(--sans);cursor:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#030405;color:var(--text);font-family:var(--sans);cursor:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body.mouse{cursor:default}
 #vp{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center}
 #app{position:absolute;inset:0;overflow:hidden;background:#05070a}
@@ -19,7 +19,7 @@ body.mouse{cursor:default}
 
 /* wallpapers */
 .scene,.cutpiece{position:absolute;inset:0;overflow:hidden}
-.scene{opacity:0}.scene.on{opacity:1}
+.scene{opacity:0;visibility:hidden}.scene.on{opacity:1;visibility:visible}
 .glow{position:absolute;inset:0}
 .scene img{position:absolute;display:block;transform-origin:62% 38%}
 .scene.on img.art{animation:drift 7s ease-out forwards}
@@ -51,7 +51,7 @@ img.cut{right:190px;bottom:0;height:1030px;width:auto;filter:drop-shadow(0 0 40p
  linear-gradient(0deg,rgba(5,6,7,.96) 0,rgba(5,6,7,.72) 300px,transparent 560px),
  linear-gradient(180deg,rgba(5,6,7,.65),transparent 170px),
  radial-gradient(130% 110% at 55% 40%,transparent 55%,rgba(0,0,0,.5))}
-.grain{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:.075;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.grain{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:.075;background-size:220px 220px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
 canvas{position:absolute;inset:0;width:1920px;height:1080px;z-index:5;pointer-events:none}
 
 /* top bar (inside TV safe area) */
@@ -90,11 +90,12 @@ canvas{position:absolute;inset:0;width:1920px;height:1080px;z-index:5;pointer-ev
 .glowbox .face::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:36%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);opacity:0}
 .glowbox::before{content:"";position:absolute;inset:-5px;border-radius:inherit;padding:5px;pointer-events:none;opacity:0;transition:opacity .25s;
  background:conic-gradient(from var(--a),transparent 0 52%,var(--g) 76%,#fff 88%,transparent 96%);
- -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 2.2s linear infinite}
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 2.2s linear infinite;animation-play-state:paused}
 @keyframes spin{to{--a:360deg}}
 .glowbox:hover,.glowbox:focus{transform:translateY(-9px) scale(1.06)}
 .glowbox:hover .face,.glowbox:focus .face{border-color:var(--g);box-shadow:0 0 44px -4px var(--g),0 20px 40px rgba(0,0,0,.65),inset 0 0 30px -10px var(--g)}
 .glowbox:hover::before,.glowbox:focus::before,.glowbox:hover .face::before,.glowbox:focus .face::before{opacity:1}
+.glowbox:hover::before,.glowbox:focus::before{animation-play-state:running}
 .glowbox:hover .face::after,.glowbox:focus .face::after{animation:sheen .9s ease-out}
 @keyframes sheen{0%{opacity:1;left:-60%}100%{opacity:1;left:130%}}
 
@@ -206,18 +207,23 @@ const POOL=[ // text used for extra images you add to the images/ folder
 
 /* ================= STAGE FIT ================= */
 const $=s=>document.querySelector(s),vp=$('#vp'),app=$('#app'),box=$('#scenes');
-let S=1;function fit(){S=Math.min(innerWidth/1920,innerHeight/1080);vp.style.transform='translate(-50%,-50%) scale('+S+')'}
-fit();addEventListener('resize',fit);
+let S=1;const OVERSCAN_SCALE=0.96;function fit(){const w=window.innerWidth||document.documentElement.clientWidth||1920,h=window.innerHeight||document.documentElement.clientHeight||1080;S=Math.min(w/1920,h/1080)*OVERSCAN_SCALE;vp.style.transform='translate(-50%,-50%) scale('+S+')'}
+fit();addEventListener('resize',fit);addEventListener('orientationchange',fit);addEventListener('load',fit);if(window.visualViewport)visualViewport.addEventListener('resize',fit);setTimeout(fit,100);
 
 /* ================= SCENES ================= */
 const els=[];
-function build(s){
+function build(s,idx){
  const d=document.createElement('div');d.className='scene';
  const g=document.createElement('div');g.className='glow';g.style.background='radial-gradient(60% 90% at 72% 45%,'+s.glow+' 0%,#07090a 72%)';d.appendChild(g);
- if(s.amb){const a=new Image();a.className='amb';a.src=s.amb;d.appendChild(a)}
- const i=new Image();i.className='art '+s.k;i.decoding='async';i.src=s.src;if(s.px)i.style.setProperty('--px',s.px);d.appendChild(i);
+ if(s.amb){const a=new Image();a.className='amb';a.decoding='async';a.src=s.amb;a.onerror=function(){console.warn('[Levi] ambient image failed',s.k)};d.appendChild(a)}
+ const i=new Image();i.className='art '+s.k;i.decoding='async';i.dataset.src=s.src;if(s.px)i.style.setProperty('--px',s.px);
+ i.onerror=function(){console.warn('[Levi] wallpaper failed',s.k)};
+ if(idx===0)i.src=s.src;
+ d.appendChild(i);
  box.appendChild(d);return d}
-SCENES.forEach(s=>els.push(build(s)));
+function loadScene(k){const d=els[k];if(!d)return;const im=d.querySelector('img.art');if(im&&!im.src&&im.dataset.src)im.src=im.dataset.src}
+SCENES.forEach((s,idx)=>els.push(build(s,idx)));
+requestAnimationFrame(function(){setTimeout(function(){loadScene(1)},500)});
 
 /* auto-load extra images from images/ folder */
 function addExtra(url,n){
@@ -227,13 +233,7 @@ function addExtra(url,n){
   SCENES.push(s);els.push(build(s))};
  im.src=url}
 EXTRA_IMAGES.forEach((u,n)=>addExtra(u,n));
-(function probe(){
- const ex=['jpg','jpeg','png','webp'];let n=1,miss=0;
- function tryN(){ if(n>60||miss>=3)return;
-  const names=[n,String(n).padStart(2,'0')],cands=[];names.forEach(m=>ex.forEach(e=>cands.push(IMAGE_FOLDER+'levi-'+m+'.'+e)));
-  let k=0;(function t(){ if(k>=cands.length){miss++;n++;return tryN()}
-   const im=new Image();im.onload=()=>{addExtra(cands[k],n);miss=0;n++;tryN()};im.onerror=()=>{k++;t()};im.src=cands[k]})()}
- setTimeout(tryN,1500)})();
+/* No images/ folder ships in the APK assets, so probing for levi-*.jpg/png/webp can never succeed here. Extra wallpapers still work when listed explicitly in EXTRA_IMAGES above. Probing was removed to avoid wasted failed file loads on a low-resource TV. */
 
 /* ================= UI ================= */
 const dock=$('#dock');
@@ -253,11 +253,15 @@ addEventListener('keydown',e=>{
  else if(e.key==='ArrowLeft')C=Math.max(C-1,0);
  else if(e.key==='ArrowDown'){R=Math.min(R+1,2);C=Math.min(C,rows[R].length-1)}
  else if(e.key==='ArrowUp'){R=Math.max(R-1,0);C=Math.min(C,rows[R].length-1)}
- else if(e.key==='Enter'){document.activeElement.click();return}
+ else if(e.key==='Enter'||e.keyCode===23){if(document.activeElement)document.activeElement.click();return}
  else return;
  rows[R][C].focus();e.preventDefault()});
 addEventListener('mousemove',()=>document.body.classList.add('mouse'));
 card.focus();
+window.addEventListener('error',function(e){console.error('[Levi] JS error',e.message,e.filename,e.lineno)});
+window.addEventListener('unhandledrejection',function(e){console.error('[Levi] unhandled rejection',e.reason)});
+addEventListener('focus',function(){if(!document.activeElement||document.activeElement===document.body)card.focus()});
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&(!document.activeElement||document.activeElement===document.body))card.focus()});
 
 function tick(){$('#clock').textContent=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
 tick();setInterval(tick,10000);
@@ -269,8 +273,9 @@ function setText(s){
 
 /* ================= BLADE CUT ================= */
 let cur=0,EM=SCENES[0].em;
-function show(i){els.forEach((e,k)=>e.classList.toggle('on',k===i));cur=i;setText(SCENES[i]);EM=SCENES[i].em}
+function show(i){loadScene(i);els.forEach((e,k)=>e.classList.toggle('on',k===i));cur=i;setText(SCENES[i]);EM=SCENES[i].em}
 function bladeCut(next){
+ app.querySelectorAll('.cutpiece').forEach(function(n){n.remove()});loadScene(next);
  const W=1920,H=1080,flip=Math.random()<.5;
  let y1=H*(.22+Math.random()*.2),y2=H*(.58+Math.random()*.2);if(flip)[y1,y2]=[y2,y1];
  const m=(y2-y1)/W,ext=W*.06,xa=-ext,xb=W+ext,ya=y1+m*xa,yb=y1+m*xb,len=Math.hypot(xb-xa,yb-ya);
@@ -288,18 +293,18 @@ function bladeCut(next){
  const f=$('#flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
  app.classList.remove('shake');void app.offsetWidth;app.classList.add('shake');
  cur=next;EM=SCENES[next].em;setTimeout(()=>setText(SCENES[next]),220);
- setTimeout(()=>{A.remove();B.remove()},1200)}
+ setTimeout(()=>{A.remove();B.remove();loadScene((next+1)%els.length)},1200)}
 let timer;function loop(){clearInterval(timer);timer=setInterval(()=>bladeCut((cur+1)%els.length),CHANGE_MS)}
 addEventListener('click',e=>{if(!e.target.closest('.glowbox,.app,.tab')){bladeCut((cur+1)%els.length);loop()}});
 show(0);loop();
 
 /* ================= embers ================= */
 const cv=$('#c'),x=cv.getContext('2d'),W=1920,H=1080,P=[];
-for(let i=0;i<55;i++)P.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,vy:-.25-Math.random()*.6,vx:(Math.random()-.3)*.5,a:Math.random()*.55+.15,t:Math.random()*6});
-(function f(){x.clearRect(0,0,W,H);
+for(let i=0;i<32;i++)P.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,vy:-.25-Math.random()*.6,vx:(Math.random()-.3)*.5,a:Math.random()*.55+.15,t:Math.random()*6});
+let lastEmber=-33;
+(function f(t){requestAnimationFrame(f);if(document.hidden)return;if(t-lastEmber<33)return;lastEmber=t;x.clearRect(0,0,W,H);
  for(const p of P){p.t+=.02;p.x+=p.vx+Math.sin(p.t)*.2;p.y+=p.vy;if(p.y<-6){p.y=H+6;p.x=Math.random()*W}
-  x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fillStyle='rgba('+EM+','+(p.a*(.6+.4*Math.sin(p.t*2)))+')';x.fill()}
- requestAnimationFrame(f)})();
+  x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fillStyle='rgba('+EM+','+(p.a*(.6+.4*Math.sin(p.t*2)))+')';x.fill()}})(0);
 </script>
 </body>
 </html>
